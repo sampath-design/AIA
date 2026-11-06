@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIA Wealth Planner - Tracking System</title>
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-brand { font-weight: bold; color: #d71920 !important; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .stage-badge { font-size: 0.85rem; padding: 0.4em 0.8em; border-radius: 12px; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fas fa-chart-line me-2"></i>AIA Wealth Planner</a>
+            
+            <div class="d-flex align-items-center">
+                <!-- Language Switcher -->
+                <div class="me-3">
+                    <button class="btn btn-sm btn-outline-warning" onclick="toggleLanguage('si')">සිංහල</button>
+                    <button class="btn btn-sm btn-outline-light" onclick="toggleLanguage('en')">English</button>
+                </div>
+                
+                <div id="navButtons">
+                    <button class="btn btn-outline-light btn-sm me-2" onclick="showAdminLogin()"><i class="fas fa-user-shield me-1"></i> <span data-key="adminLoginBtn">Admin Login</span></button>
+                    <button class="btn btn-danger btn-sm" onclick="showClientLogin()"><i class="fas fa-user me-1"></i> <span data-key="clientPortalBtn">Client Portal</span></button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+
+        <!-- =================== 1. ADMIN LOGIN =================== -->
+        <div id="adminLoginView" class="row justify-content-center mt-5">
+            <div class="col-md-4">
+                <div class="card p-4 shadow">
+                    <h4 class="text-center mb-3 text-danger"><i class="fas fa-user-shield me-2"></i><span data-key="adminTitle">Admin Login</span></h4>
+                    <p class="text-muted text-center small" data-key="adminSub">Enter password to access Planner Dashboard</p>
+                    <div class="mb-3">
+                        <label class="form-label" data-key="passwordLabel">Password</label>
+                        <input type="password" id="adminPassword" class="form-control" placeholder="Default: admin123">
+                    </div>
+                    <button class="btn btn-danger w-100" onclick="verifyAdmin()" data-key="loginBtn">Login</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================== 2. ADMIN DASHBOARD & SEPARATE PRESENTATION TRACKING =================== -->
+        <div id="adminDashboardView" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-tasks text-danger me-2"></i><span data-key="dashTitle">Wealth Planner Dashboard</span></h2>
+                <div>
+                    <button class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#addClientModal">
+                        <i class="fas fa-plus me-1"></i> <span data-key="addClientBtn">Add New Client</span>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="logoutAdmin()" data-key="logoutBtn">Logout</button>
+                </div>
+            </div>
+
+            <!-- Dashboard Tabs -->
+            <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold text-danger" id="all-clients-tab" data-bs-toggle="tab" data-bs-target="#all-clients-view"><i class="fas fa-users me-2"></i><span data-key="tabAllClients">All Clients & Policies</span></button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold text-primary" id="presentation-tab" data-bs-toggle="tab" data-bs-target="#presentation-view"><i class="fas fa-desktop me-2"></i><span data-key="tabPresTracking">Presentation Tracking</span></button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="adminTabsContent">
+                <!-- Tab 1: All Clients & Payments -->
+                <div class="tab-pane fade show active" id="all-clients-view">
+                    <div class="card p-3 shadow-sm">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th data-key="thPresNo">Presentation No</th>
+                                        <th data-key="thName">Name</th>
+                                        <th data-key="thPhone">Phone</th>
+                                        <th data-key="thPolicy">Policy No</th>
+                                        <th data-key="thAmount">Amount</th>
+                                        <th data-key="thDueDate">Due Date</th>
+                                        <th data-key="thReceipt">Receipt / Bank Info</th>
+                                        <th data-key="thAction">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Dedicated Presentation Tracking (Without Policy No & Amount clutter) -->
+                <div class="tab-pane fade" id="presentation-view">
+                    <div class="card p-4 shadow-sm bg-light">
+                        <h5 class="mb-3 text-primary"><i class="fas fa-chart-line me-2"></i><span data-key="presPipelineTitle">Presentation Progress Pipeline</span></h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered bg-white align-middle">
+                                <thead class="table-primary">
+                                    <tr>
+                                        <th data-key="thPresNo">Presentation No</th>
+                                        <th data-key="thName">Name</th>
+                                        <th data-key="thPhone">Phone</th>
+                                        <th data-key="thStage">Current Stage</th>
+                                        <th data-key="thUpdateStage">Update Stage</th>
+                                        <th data-key="thWhatsApp">WhatsApp Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="presentationTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- =================== 3. CLIENT PORTAL =================== -->
+        <div id="clientPortalView" style="display: none;">
+            <div class="row justify-content-center mt-5">
+                <div class="col-md-5">
+                    <div class="card p-4 shadow" id="clientLoginBox">
+                        <h4 class="text-center mb-3 text-danger"><i class="fas fa-user me-2"></i><span data-key="clientLoginTitle">Client Portal Login</span></h4>
+                        <p class="text-muted text-center small" data-key="clientLoginSub">Enter your Presentation No or Policy No to login</p>
+                        <div class="mb-3">
+                            <label class="form-label" data-key="loginInputLabel">Presentation No / Policy No</label>
+                            <input type="text" id="loginPolicyNo" class="form-control" placeholder="e.g. PR-1001 or AIA-1001">
+                        </div>
+                        <button class="btn btn-danger w-100" onclick="clientLogin()" data-key="loginBtn">Login</button>
+                    </div>
+
+                    <div class="card p-4 shadow" id="clientDashboardBox" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 id="portalClientName" class="text-danger"></h4>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="clientLogout()" data-key="logoutBtn">Logout</button>
+                        </div>
+                        <hr>
+                        <p><strong data-key="thPresNo">Presentation No:</strong> <span id="portalPresNo"></span></p>
+                        <p><strong data-key="thPolicy">Policy No:</strong> <span id="portalPolicyNo"></span></p>
+                        <p><strong data-key="thAmount">Premium Amount:</strong> LKR <span id="portalAmount"></span></p>
+                        <p><strong data-key="thDueDate">Due Date:</strong> <span id="portalDueDate"></span></p>
+                        <p><strong data-key="thStage">Current Stage:</strong> <span id="portalStage" class="badge bg-info text-dark"></span></p>
+                        
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h5 class="mb-3" data-key="uploadHeader">Upload Receipt & Bank Details</h5>
+                            <div class="mb-3">
+                                <label class="form-label" data-key="bankDetailsLabel">Bank Details</label>
+                                <textarea id="portalBankDetails" class="form-control" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" data-key="receiptLabel">Receipt Slip Image</label>
+                                <input type="file" id="portalReceiptFile" class="form-control" accept="image/*">
+                            </div>
+                            <button class="btn btn-success w-100" onclick="submitPayment()" data-key="submitPaymentBtn">Submit Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal: Add Client -->
+    <div class="modal fade" id="addClientModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" data-key="addClientBtn">Add New Client</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addClientForm">
+                        <div class="mb-3">
+                            <label class="form-label" data-key="thPresNo">Client Presentation No</label>
+                            <input type="text" id="clientPresNo" class="form-control" placeholder="e.g. PR-1001" required>
+                        </div>
+                        <div class="mb-3"><label class="form-label" data-key="thName">Name</label><input type="text" id="clientName" class="form-control" required></div>
+                        <div class="mb-3"><label class="form-label" data-key="thPhone">WhatsApp Number</label><input type="text" id="clientPhone" class="form-control" required></div>
+                        <div class="mb-3">
+                            <label class="form-label" data-key="thStage">Initial Stage</label>
+                            <select id="clientStage" class="form-select">
+                                <option value="Online Presentation 01">Online Presentation 01</option>
+                                <option value="Online Presentation 02">Online Presentation 02</option>
+                                <option value="Physical Presentation">Physical Presentation</option>
+                                <option value="Online Presentation 03">Online Presentation 03</option>
+                                <option value="Policy Selected & Active">Policy Selected & Active</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn btn-danger w-100" onclick="saveClient()" data-key="saveBtn">Save</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Policy & Payment Details -->
+    <div class="modal fade" id="editPolicyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white">
+                    <h6 class="modal-title">Add Policy & Payment Details</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editIndex">
+                    <div class="mb-3">
+                        <label class="form-label small">Policy Number</label>
+                        <input type="text" id="editPolicyNoInput" class="form-control form-control-sm" placeholder="e.g. AIA-8899">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Amount (LKR)</label>
+                        <input type="number" id="editAmountInput" class="form-control form-control-sm" placeholder="e.g. 15000">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Due Date</label>
+                        <input type="date" id="editDueDateInput" class="form-control form-control-sm">
+                    </div>
+                    <button type="button" class="btn btn-danger btn-sm w-100" onclick="savePolicyDetails()">Save Details</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const i18n = {
+            en: {
+                adminLoginBtn: "Admin Login", clientPortalBtn: "Client Portal", adminTitle: "Admin Login",
+                adminSub: "Enter password to access Planner Dashboard", passwordLabel: "Password", loginBtn: "Login",
+                dashTitle: "Wealth Planner Dashboard", addClientBtn: "Add New Client", logoutBtn: "Logout",
+                tabAllClients: "All Clients & Policies", tabPresTracking: "Presentation Tracking",
+                thPresNo: "Presentation No", thName: "Name", thPhone: "Phone (WhatsApp)", thPolicy: "Policy No", thAmount: "Amount",
+                thDueDate: "Due Date", thReceipt: "Receipt / Bank Info", thAction: "Actions", thStage: "Current Stage",
+                thUpdateStage: "Update Stage", thWhatsApp: "WhatsApp Link", presPipelineTitle: "Presentation Progress Pipeline",
+                clientLoginTitle: "Client Portal Login", clientLoginSub: "Enter your Presentation No or Policy No to login",
+                loginInputLabel: "Presentation No / Policy No", uploadHeader: "Upload Receipt & Bank Details", bankDetailsLabel: "Bank Details (Bank, Ref No, Date)",
+                receiptLabel: "Receipt Image", submitPaymentBtn: "Submit Details", saveBtn: "Save Client"
+            },
+            si: {
+                adminLoginBtn: "ඇඩ්මින් ප්‍රවේශය", clientPortalBtn: "ගනුදෙනුකරුගේ පිවිසුම", adminTitle: "ඇඩ්මින් ප්‍රවේශය",
+                adminSub: "පාලක පුවරුවට ඇතුළු වීමට මුරපදය යොදන්න", passwordLabel: "මුරපදය", loginBtn: "ඇතුළු වන්න",
+                dashTitle: "ගනුදෙනුකරු කළමනාකරණ පුවරුව", addClientBtn: "නව ගනුදෙනුකරුවෙක් එකතු කරන්න", logoutBtn: "නික්මෙන්න",
+                tabAllClients: "සියලුම ගනුදෙනුකරුවන් සහ ගෙවීම්", tabPresTracking: "ප්‍රෙසන්ටේෂන් ට්‍රැකින් (Presentation Tracking)",
+                thPresNo: "Presentation අංකය", thName: "නම", thPhone: "දුරකථන (WhatsApp)", thPolicy: "පොලිසි අංකය", thAmount: "වාරිකය",
+                thDueDate: "ගෙවිය යුතු දිනය", thReceipt: "රිසිට්පත / විස්තර", thAction: "ක්‍රියාමාර්ග", thStage: "වත්මන් අවධිය",
+                thUpdateStage: "අවධිය යාවත්කාලීන කරන්න", thWhatsApp: "WhatsApp මතක් කිරීම්", presPipelineTitle: "ඉදිරිපත් කිරීමේ ප්‍රගති නිරීක්ෂණය",
+                clientLoginTitle: "ගනුදෙනුකරුගේ පිවිසුම", clientLoginSub: "පිවිසීමට Presentation අංකය හෝ පොලිසි අංකය යොදන්න",
+                loginInputLabel: "Presentation අංකය / පොලිසි අංකය", uploadHeader: "ගෙවීම් විස්තර සහ රිසිට්පත යොමු කරන්න", bankDetailsLabel: "බැංකු විස්තර (බැංකුව, Ref No, දිනය)",
+                receiptLabel: "ස්ලිප් පින්තූරය", submitPaymentBtn: "තොරතුරු යවන්න", saveBtn: "සේව් කරන්න"
+            }
+        };
+
+        let currentLang = 'si';
+        let clients = JSON.parse(localStorage.getItem('aia_clients')) || [
+            { id: 1, presNo: "PR-1001", name: "කමල් පෙරේරා", phone: "0765588622", policyNo: "", amount: 0, dueDate: "", stage: "Online Presentation 01", receipt: "", bankDetails: "" },
+            { id: 2, presNo: "PR-1002", name: "නිමල් සිල්වා", phone: "0779876543", policyNo: "AIA-1002", amount: 25000, dueDate: "2026-11-15", stage: "Physical Presentation", receipt: "", bankDetails: "" }
+        ];
+        let loggedInKey = null;
+
+        function toggleLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if(i18n[lang][key]) el.innerText = i18n[lang][key];
+            });
+        }
+
+        function saveData() {
+            localStorage.setItem('aia_clients', JSON.stringify(clients));
+            renderAdminDashboard();
+        }
+
+        function showAdminLogin() {
+            document.getElementById('adminLoginView').style.display = 'block';
+            document.getElementById('adminDashboardView').style.display = 'none';
+            document.getElementById('clientPortalView').style.display = 'none';
+        }
+
+        function verifyAdmin() {
+            if(document.getElementById('adminPassword').value === 'admin123') {
+                document.getElementById('adminLoginView').style.display = 'none';
+                document.getElementById('adminDashboardView').style.display = 'block';
+                renderAdminDashboard();
+            } else alert('Incorrect Password!');
+        }
+
+        function logoutAdmin() {
+            document.getElementById('adminPassword').value = '';
+            showAdminLogin();
+        }
+
+        function showClientLogin() {
+            document.getElementById('adminLoginView').style.display = 'none';
+            document.getElementById('adminDashboardView').style.display = 'none';
+            document.getElementById('clientPortalView').style.display = 'block';
+            document.getElementById('clientLoginBox').style.display = 'block';
+            document.getElementById('clientDashboardBox').style.display = 'none';
+        }
+
+        function renderAdminDashboard() {
+            const tbody1 = document.getElementById('clientTableBody');
+            const tbody2 = document.getElementById('presentationTableBody');
+            tbody1.innerHTML = ''; tbody2.innerHTML = '';
+
+            clients.forEach((c, index) => {
+                let policyDisplay = c.policyNo ? `<code>${c.policyNo}</code>` : `<button class="btn btn-outline-danger btn-sm py-0" onclick="openPolicyModal(${index})">+ Add Policy</button>`;
+                let amountDisplay = c.amount ? `LKR ${c.amount.toLocaleString()}` : `-`;
+
+                // Table 1: All Clients & Payments
+                tbody1.innerHTML += `<tr>
+                    <td><span class="badge bg-secondary">${c.presNo}</span></td>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.phone}</td>
+                    <td>${policyDisplay}</td>
+                    <td>${amountDisplay}</td>
+                    <td>${c.dueDate || '-'}</td>
+                    <td>${c.receipt ? `<a href="${c.receipt}" target="_blank" class="btn btn-sm btn-info text-white"><i class="fas fa-image"></i> View Slip</a>` : '<span class="text-muted small">No Slip</span>'}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteClient(${index})"><i class="fas fa-trash"></i></button></td>
+                </tr>`;
+
+                // Table 2: Dedicated Presentation Tracking (No Policy No/Amount clutter)
+                tbody2.innerHTML += `<tr>
+                    <td><span class="badge bg-secondary">${c.presNo}</span></td>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.phone}</td>
+                    <td><span class="badge bg-primary stage-badge">${c.stage}</span></td>
+                    <td>
+                        <select class="form-select form-select-sm border-danger" onchange="updateStage(${index}, this.value)">
+                            <option value="Online Presentation 01" ${c.stage==='Online Presentation 01'?'selected':''}>Online Pres. 01</option>
+                            <option value="Online Presentation 02" ${c.stage==='Online Presentation 02'?'selected':''}>Online Pres. 02</option>
+                            <option value="Physical Presentation" ${c.stage==='Physical Presentation'?'selected':''}>Physical Pres.</option>
+                            <option value="Online Presentation 03" ${c.stage==='Online Presentation 03'?'selected':''}>Online Pres. 03</option>
+                            <option value="Policy Selected & Active" ${c.stage==='Policy Selected & Active'?'selected':''}>Active Policy</option>
+                        </select>
+                    </td>
+                    <td>
+                        <a href="https://wa.me/${c.phone}?text=Dear%20${encodeURIComponent(c.name)},%20your%20current%20presentation%20stage%20is:%20${encodeURIComponent(c.stage)}." target="_blank" class="btn btn-success btn-sm"><i class="fab fa-whatsapp"></i> Remind</a>
+                    </td>
+                </tr>`;
+            });
+        }
+
+        function saveClient() {
+            const presNo = document.getElementById('clientPresNo').value.trim();
+            const name = document.getElementById('clientName').value.trim();
+            const phone = document.getElementById('clientPhone').value.trim();
+            const stage = document.getElementById('clientStage').value;
+
+            if(!presNo || !name) return alert('Please enter Presentation No and Client Name!');
+            clients.push({ id: Date.now(), presNo, name, phone, policyNo: "", amount: 0, dueDate: "", stage, receipt: "", bankDetails: "" });
+            saveData();
+            bootstrap.Modal.getInstance(document.getElementById('addClientModal')).hide();
+            document.getElementById('addClientForm').reset();
+        }
+
+        function openPolicyModal(index) {
+            document.getElementById('editIndex').value = index;
+            document.getElementById('editPolicyNoInput').value = clients[index].policyNo || '';
+            document.getElementById('editAmountInput').value = clients[index].amount || '';
+            document.getElementById('editDueDateInput').value = clients[index].dueDate || '';
+            new bootstrap.Modal(document.getElementById('editPolicyModal')).show();
+        }
+
+        function savePolicyDetails() {
+            const index = document.getElementById('editIndex').value;
+            clients[index].policyNo = document.getElementById('editPolicyNoInput').value.trim();
+            clients[index].amount = Number(document.getElementById('editAmountInput').value) || 0;
+            clients[index].dueDate = document.getElementById('editDueDateInput').value;
+            saveData();
+            bootstrap.Modal.getInstance(document.getElementById('editPolicyModal')).hide();
+        }
+
+        function updateStage(index, newStage) { clients[index].stage = newStage; saveData(); }
+        function deleteClient(index) { if(confirm('Delete client?')) { clients.splice(index, 1); saveData(); } }
+
+        function clientLogin() {
+            const inputKey = document.getElementById('loginPolicyNo').value.trim();
+            const client = clients.find(c => c.presNo === inputKey || (c.policyNo && c.policyNo === inputKey));
+            if(client) {
+                loggedInKey = inputKey;
+                document.getElementById('clientLoginBox').style.display = 'none';
+                document.getElementById('clientDashboardBox').style.display = 'block';
+                document.getElementById('portalClientName').innerText = client.name;
+                document.getElementById('portalPresNo').innerText = client.presNo;
+                document.getElementById('portalPolicyNo').innerText = client.policyNo || 'Pending Issue';
+                document.getElementById('portalAmount').innerText = (client.amount || 0).toLocaleString();
+                document.getElementById('portalDueDate').innerText = client.dueDate || 'N/A';
+                document.getElementById('portalStage').innerText = client.stage;
+                document.getElementById('portalBankDetails').value = client.bankDetails || '';
+            } else alert('Invalid Presentation No or Policy No!');
+        }
+
+        function clientLogout() {
+            loggedInKey = null;
+            document.getElementById('clientLoginBox').style.display = 'block';
+            document.getElementById('clientDashboardBox').style.display = 'none';
+        }
+
+        function submitPayment() {
+            const bankDetails = document.getElementById('portalBankDetails').value;
+            const fileInput = document.getElementById('portalReceiptFile');
+            const client = clients.find(c => c.presNo === loggedInKey || (c.policyNo && c.policyNo === loggedInKey));
+
+            if(client) {
+                client.bankDetails = bankDetails;
+                if(fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        client.receipt = e.target.result;
+                        saveData();
+                        alert('Receipt uploaded successfully!');
+                        clientLogin();
+                    }
+                    reader.readAsDataURL(fileInput.files[0]);
+                } else {
+                    saveData();
+                    alert('Details updated!');
+                    clientLogin();
+                }
+            }
+        }
+
+        // Initialize language
+        toggleLanguage('si');
+        showAdminLogin();
+    </script>
+</body>
+</html>
