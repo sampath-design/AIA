@@ -53,7 +53,7 @@
             </div>
         </div>
 
-        <!-- =================== 2. ADMIN DASHBOARD & SEPARATE PRESENTATION TRACKING =================== -->
+        <!-- =================== 2. ADMIN DASHBOARD & STATS =================== -->
         <div id="adminDashboardView" style="display: none;">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-tasks text-danger me-2"></i><span data-key="dashTitle">Wealth Planner Dashboard</span></h2>
@@ -65,10 +65,38 @@
                 </div>
             </div>
 
+            <!-- Stats Cards: Presentations, Approved Policies, Due Dates Tracker -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card p-3 bg-white border-start border-4 border-primary">
+                        <h6 class="text-muted">Total Presentations</h6>
+                        <h3 id="statTotalPres">0</h3>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 bg-white border-start border-4 border-success">
+                        <h6 class="text-muted">Approved Policies</h6>
+                        <h3 id="statApprovedPolicies">0</h3>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 bg-white border-start border-4 border-warning">
+                        <h6 class="text-muted">Payment Reviews</h6>
+                        <h3 id="statPendingReviews">0</h3>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card p-3 bg-white border-start border-4 border-danger">
+                        <h6 class="text-muted">Due Payments Track</h6>
+                        <h3 id="statDuePayments">0</h3>
+                    </div>
+                </div>
+            </div>
+
             <!-- Dashboard Tabs -->
             <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
                 <li class="nav-item">
-                    <button class="nav-link active fw-bold text-danger" id="all-clients-tab" data-bs-toggle="tab" data-bs-target="#all-clients-view"><i class="fas fa-users me-2"></i><span data-key="tabAllClients">All Clients & Policies</span></button>
+                    <button class="nav-link active fw-bold text-danger" id="all-clients-tab" data-bs-toggle="tab" data-bs-target="#all-clients-view"><i class="fas fa-users me-2"></i><span data-key="tabAllClients">All Clients & Payments</span></button>
                 </li>
                 <li class="nav-item">
                     <button class="nav-link fw-bold text-primary" id="presentation-tab" data-bs-toggle="tab" data-bs-target="#presentation-view"><i class="fas fa-desktop me-2"></i><span data-key="tabPresTracking">Presentation Tracking</span></button>
@@ -76,7 +104,7 @@
             </ul>
 
             <div class="tab-content" id="adminTabsContent">
-                <!-- Tab 1: All Clients & Payments -->
+                <!-- Tab 1: All Clients & Payments with Due Dates -->
                 <div class="tab-pane fade show active" id="all-clients-view">
                     <div class="card p-3 shadow-sm">
                         <div class="table-responsive">
@@ -99,7 +127,7 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Dedicated Presentation Tracking (Without Policy No & Amount clutter) -->
+                <!-- Tab 2: Presentation Tracking -->
                 <div class="tab-pane fade" id="presentation-view">
                     <div class="card p-4 shadow-sm bg-light">
                         <h5 class="mb-3 text-primary"><i class="fas fa-chart-line me-2"></i><span data-key="presPipelineTitle">Presentation Progress Pipeline</span></h5>
@@ -261,7 +289,7 @@
         let currentLang = 'si';
         let clients = JSON.parse(localStorage.getItem('aia_clients')) || [
             { id: 1, presNo: "PR-1001", name: "කමල් පෙරේරා", phone: "0765588622", policyNo: "", amount: 0, dueDate: "", stage: "Online Presentation 01", receipt: "", bankDetails: "" },
-            { id: 2, presNo: "PR-1002", name: "නිමල් සිල්වා", phone: "0779876543", policyNo: "AIA-1002", amount: 25000, dueDate: "2026-11-15", stage: "Physical Presentation", receipt: "", bankDetails: "" }
+            { id: 2, presNo: "PR-1002", name: "නිමල් සිල්වා", phone: "0779876543", policyNo: "AIA-1002", amount: 25000, dueDate: "2026-11-15", stage: "Policy Selected & Active", receipt: "", bankDetails: "" }
         ];
         let loggedInKey = null;
 
@@ -310,7 +338,16 @@
             const tbody2 = document.getElementById('presentationTableBody');
             tbody1.innerHTML = ''; tbody2.innerHTML = '';
 
+            let totalPres = clients.length;
+            let approvedPolicies = 0;
+            let pendingReviews = 0;
+            let duePaymentsCount = 0;
+
             clients.forEach((c, index) => {
+                if(c.policyNo) approvedPolicies++;
+                if(c.receipt) pendingReviews++;
+                if(c.dueDate) duePaymentsCount++;
+
                 let policyDisplay = c.policyNo ? `<code>${c.policyNo}</code>` : `<button class="btn btn-outline-danger btn-sm py-0" onclick="openPolicyModal(${index})">+ Add Policy</button>`;
                 let amountDisplay = c.amount ? `LKR ${c.amount.toLocaleString()}` : `-`;
 
@@ -326,7 +363,7 @@
                     <td><button class="btn btn-danger btn-sm" onclick="deleteClient(${index})"><i class="fas fa-trash"></i></button></td>
                 </tr>`;
 
-                // Table 2: Dedicated Presentation Tracking (No Policy No/Amount clutter)
+                // Table 2: Presentation Tracking
                 tbody2.innerHTML += `<tr>
                     <td><span class="badge bg-secondary">${c.presNo}</span></td>
                     <td><strong>${c.name}</strong></td>
@@ -346,6 +383,12 @@
                     </td>
                 </tr>`;
             });
+
+            // Update stats counter cards
+            document.getElementById('statTotalPres').innerText = totalPres;
+            document.getElementById('statApprovedPolicies').innerText = approvedPolicies;
+            document.getElementById('statPendingReviews').innerText = pendingReviews;
+            document.getElementById('statDuePayments').innerText = duePaymentsCount;
         }
 
         function saveClient() {
